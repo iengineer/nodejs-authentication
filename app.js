@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const bodyParser   = require('body-parser');
 const layouts      = require('express-ejs-layouts');
 const mongoose     = require('mongoose');
+const session      = require('express-session');
 
 
 mongoose.connect('mongodb://localhost/authentication-app');
@@ -27,9 +28,27 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(layouts);
+app.use(session({
+  secret: 'authentication application',
 
+  // these two options are there to prevent warning
+  resave: true,
+  saveUninitialized: true
+}) );
+
+// OUR ROUTES HERE
+// ----------------------------------------------------------
 const index = require('./routes/index');
 app.use('/', index);
+
+// require the file
+const myAuthRoutes = require('./routes/auth-routes.js');
+// connect it to application
+app.use('/', myAuthRoutes);
+
+// ----------------------------------------------------------
+
+
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
