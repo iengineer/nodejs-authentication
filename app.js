@@ -7,6 +7,7 @@ const bodyParser   = require('body-parser');
 const layouts      = require('express-ejs-layouts');
 const mongoose     = require('mongoose');
 const session      = require('express-session');
+const passport     = require('passport');
 
 
 mongoose.connect('mongodb://localhost/authentication-app');
@@ -31,10 +32,15 @@ app.use(layouts);
 app.use(session({
   secret: 'authentication application',
 
-  // these two options are there to prevent warning
+  // these two options are there to prevent warnings
   resave: true,
   saveUninitialized: true
 }) );
+
+
+// These need to come AFTER the session middleware.
+app.use(passport.initialize());
+app.use(passport.session());
 
 // OUR ROUTES HERE
 // ----------------------------------------------------------
