@@ -42,6 +42,12 @@ app.use(passport.initialize());
 app.use(passport.session());
 // ... and BEFORE our routes
 
+app.use((req, res, next) => {
+  if (req.user) {
+    res.locals.user = req.user;
+  } 
+  next();
+});
 
 // PASSPORT GOES THROUGH THIS
   // 1. Our form
