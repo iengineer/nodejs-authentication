@@ -1,5 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
+const passport = require('passport');
 const User = require('../models/user-model.js');
 
 const authRoutes = express.Router();
@@ -77,5 +78,19 @@ authRoutes.post('/signup', (req, res, next) => {
     }
   );
 });
+
+authRoutes.get('/login', (req, res, next) => {
+  res.render('auth/login-view.ejs');
+});
+
+// <form method="post" action="/login">
+authRoutes.post('/login',
+//                      local as in "LocalStrategy" (our method of login.)
+//                        |
+  passport.authenticate('local', {
+    successRedirect: '/',
+    failureRedirect: '/login'
+  } )
+);
 
 module.exports = authRoutes;

@@ -19,7 +19,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 // default value for title local
-app.locals.title = 'Express - Generated with IronGenerator';
+app.locals.title = 'Authentication Application - Wadson';
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -29,34 +29,40 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(layouts);
+app.use( session({
+  secret: 'threatZERO authentication',
 
-//------------------------------------------------------------------------------
-// THE BELLOW CAN BE COPY AND PASTED INTO ANY APPLICATION FOR REFERENCE.
-app.use(session({
-  secret: 'authentication application',
-
-  // these two options are there to prevent warnings
+  // these two options are there to prevent warnings in terminal
   resave: true,
   saveUninitialized: true
 }) );
 
-
-// These need to come AFTER the session middleware.
+// These need to come AFTER the session middleware
 app.use(passport.initialize());
 app.use(passport.session());
-// ... AND BEFORE ROUTES!
+// ... and BEFORE our routes
 
-// Determines what to save in the session.
+
+// PASSPORT GOES THROUGH THIS
+  // 1. Our form
+  // 2. LocalStrategy callback
+  // 3. (if successful) passport.serializeUser()
+
+
+// Determines WHAT TO SAVE in the session (what to put in the box)
+// (called when you log in)
 passport.serializeUser((user, cb) => {
-  // cb is short for "call back"
+  // "cb" is short for "callback"
   cb(null, user._id);
 });
 
+
 const User = require('./models/user-model.js');
-// Determines where to get to get the rest of the user's information.
-// CALLED ON EVERY REQUEST **AFTER** YOU LOGIN
-passport.deserializeUser((user, cb) => {
-  // "cb is short for callback"
+
+// Where to get the rest of the user's information (given what's in the box)
+// (called on EVERY request AFTER you log in)
+passport.deserializeUser((userId, cb) => {
+  // "cb" is short for "callback"
 
   // query the database with the ID from the box
   User.findById(userId, (err, theUser) => {
@@ -64,58 +70,64 @@ passport.deserializeUser((user, cb) => {
       cb(err);
       return;
     }
-    // sending the user's info to passport.
+
+    // sending the user's info to passport
     cb(null, theUser);
   });
 });
 
+
 const LocalStrategy = require('passport-local').Strategy;
-
 // The same as:
-// const passportLocal  = require('passport-local');
-// const LocalStrategy  = passportLocal.Strategy;
+// const passportLocal = require('passport-local');
+// const LocalStrategy = passportLocal.Strategy;
 
-const bcrypt  = require('bcrypt');
+const bcrypt = require('bcrypt');
 
-// to connect a Strategy we do below:
-passport.use(new LocalStrategy(
+passport.use( new LocalStrategy(
   // 1st arg -> options to customize LocalStrategy
-  { },
+  {
+    // <input name="loginUsername">
+    usernameField: 'loginUsername',
+    // <input name="loginPassword">
+    passwordField: 'loginPassword'
+  },
 
-  // 2nd arg -> callback for the logic that validates the login.
-  (loginUsername, loginPassword, next ) => {
+  // 2nd arg -> callback for the logic that validates the login
+  (loginUsername, loginPassword, next) => {
     User.findOne(
       { username: loginUsername },
+
       (err, theUser) => {
-        // tell passport if there is an error. halt. nothing we can do.
+        // Tell passport if there was an error (nothing we can do)
         if (err) {
           next(err);
           return;
         }
-        // Tell passport if there is no user with given username...
+
+        // Tell passport if there is no user with given username
         if (!theUser) {
-          //         false in 2nd arg mean "login failed."
-          //           |
+            //       false in 2nd arg means "Log in failed!"
+            //         |
           next(null, false);
           return;
         }
-        // we are checking the password against the encrypted password in database.
-        // if it matches, this will return true. else -> false.
+
+        // Tell passport if the passwords don't match
         if (!bcrypt.compareSync(loginPassword, theUser.encryptedPassword)) {
-          //         false in 2nd arg means "login failed!"
-          //           |
+            //       false in 2nd arg means "Log in failed!"
+            //         |
           next(null, false);
           return;
         }
-        // give passportthe user's details. (SUCCESS!)
+
+        // Give passport the user's details (SUCCESS!)
         next(null, theUser);
+          // -> this user goes to passport.serializeUser()
       }
     );
   }
 ) );
-// WE CAN PASTE ABOVE FOR REFERENCE. IT DOES NOT CHANGE.
-// -----------------------------------------------------------------------------
-
 
 
 
@@ -125,11 +137,8 @@ passport.use(new LocalStrategy(
 const index = require('./routes/index');
 app.use('/', index);
 
-// require the file
 const myAuthRoutes = require('./routes/auth-routes.js');
-// connect it to application
 app.use('/', myAuthRoutes);
-
 // ----------------------------------------------------------
 
 
