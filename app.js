@@ -29,6 +29,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(layouts);
+
 //------------------------------------------------------------------------------
 // THE BELLOW CAN BE COPY AND PASTED INTO ANY APPLICATION FOR REFERENCE.
 app.use(session({
@@ -68,7 +69,56 @@ passport.deserializeUser((user, cb) => {
   });
 });
 
+const LocalStrategy = require('passport-local').Strategy;
+
+// The same as:
+// const passportLocal  = require('passport-local');
+// const LocalStrategy  = passportLocal.Strategy;
+
+const bcrypt  = require('bcrypt');
+
+// to connect a Strategy we do below:
+passport.use(new LocalStrategy(
+  // 1st arg -> options to customize LocalStrategy
+  { },
+
+  // 2nd arg -> callback for the logic that validates the login.
+  (loginUsername, loginPassword, next ) => {
+    User.findOne(
+      { username: loginUsername },
+      (err, theUser) => {
+        // tell passport if there is an error. halt. nothing we can do.
+        if (err) {
+          next(err);
+          return;
+        }
+        // Tell passport if there is no user with given username...
+        if (!theUser) {
+          //         false in 2nd arg mean "login failed."
+          //           |
+          next(null, false);
+          return;
+        }
+        // we are checking the password against the encrypted password in database.
+        // if it matches, this will return true. else -> false.
+        if (!bcrypt.compareSync(loginPassword, theUser.encryptedPassword)) {
+          //         false in 2nd arg means "login failed!"
+          //           |
+          next(null, false);
+          return;
+        }
+        // give passportthe user's details. (SUCCESS!)
+        next(null, theUser);
+      }
+    );
+  }
+) );
+// WE CAN PASTE ABOVE FOR REFERENCE. IT DOES NOT CHANGE.
 // -----------------------------------------------------------------------------
+
+
+
+
 
 // OUR ROUTES HERE
 // ----------------------------------------------------------
