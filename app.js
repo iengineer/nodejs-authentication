@@ -29,6 +29,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(layouts);
+//------------------------------------------------------------------------------
+// THE BELLOW CAN BE COPY AND PASTED INTO ANY APPLICATION FOR REFERENCE.
 app.use(session({
   secret: 'authentication application',
 
@@ -41,6 +43,32 @@ app.use(session({
 // These need to come AFTER the session middleware.
 app.use(passport.initialize());
 app.use(passport.session());
+// ... AND BEFORE ROUTES!
+
+// Determines what to save in the session.
+passport.serializeUser((user, cb) => {
+  // cb is short for "call back"
+  cb(null, user._id);
+});
+
+const User = require('./models/user-model.js');
+// Determines where to get to get the rest of the user's information.
+// CALLED ON EVERY REQUEST **AFTER** YOU LOGIN
+passport.deserializeUser((user, cb) => {
+  // "cb is short for callback"
+
+  // query the database with the ID from the box
+  User.findById(userId, (err, theUser) => {
+    if (err) {
+      cb(err);
+      return;
+    }
+    // sending the user's info to passport.
+    cb(null, theUser);
+  });
+});
+
+// -----------------------------------------------------------------------------
 
 // OUR ROUTES HERE
 // ----------------------------------------------------------
