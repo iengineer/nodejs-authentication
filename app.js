@@ -19,7 +19,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 // default value for title local
-app.locals.title = 'Authentication Application - Wadson';
+app.locals.title = 'ExpressJS Authentication';
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -42,12 +42,17 @@ app.use(passport.initialize());
 app.use(passport.session());
 // ... and BEFORE our routes
 
+// This middleware sets the user variable for all views
+// (only if logged in)
+//   user: req.user     for all renders!
 app.use((req, res, next) => {
   if (req.user) {
     res.locals.user = req.user;
-  } 
+  }
+
   next();
 });
+
 
 // PASSPORT GOES THROUGH THIS
   // 1. Our form
@@ -90,12 +95,13 @@ const LocalStrategy = require('passport-local').Strategy;
 
 const bcrypt = require('bcrypt');
 
+
 passport.use( new LocalStrategy(
   // 1st arg -> options to customize LocalStrategy
   {
-    // <input name="loginUsername">
+      // <input name="loginUsername">
     usernameField: 'loginUsername',
-    // <input name="loginPassword">
+      // <input name="loginPassword">
     passwordField: 'loginPassword'
   },
 
@@ -105,13 +111,13 @@ passport.use( new LocalStrategy(
       { username: loginUsername },
 
       (err, theUser) => {
-        // Tell passport if there was an error (nothing we can do)
+        // Tell Passport if there was an error (nothing we can do)
         if (err) {
           next(err);
           return;
         }
 
-        // Tell passport if there is no user with given username
+        // Tell Passport if there is no user with given username
         if (!theUser) {
             //       false in 2nd arg means "Log in failed!"
             //         |
@@ -119,7 +125,7 @@ passport.use( new LocalStrategy(
           return;
         }
 
-        // Tell passport if the passwords don't match
+        // Tell Passport if the passwords don't match
         if (!bcrypt.compareSync(loginPassword, theUser.encryptedPassword)) {
             //       false in 2nd arg means "Log in failed!"
             //         |
@@ -127,7 +133,7 @@ passport.use( new LocalStrategy(
           return;
         }
 
-        // Give passport the user's details (SUCCESS!)
+        // Give Passport the user's details (SUCCESS!)
         next(null, theUser);
           // -> this user goes to passport.serializeUser()
       }
@@ -145,6 +151,9 @@ app.use('/', index);
 
 const myAuthRoutes = require('./routes/auth-routes.js');
 app.use('/', myAuthRoutes);
+
+const myUserRoutes = require('./routes/user-routes.js');
+app.use('/', myUserRoutes);
 // ----------------------------------------------------------
 
 

@@ -7,23 +7,31 @@
   </head>
   <body>
     <header>
-      <h1> Login &amp; Authentication </h1>
+      <h1> Authentication </h1>
 
-      <ul>
-        <li> <a href="/"> Home </a></li>
-      <% if (typeof user !== 'undefined') { %>
-        <li><a href="/logout"> Log Out </a></li>
-      <% } else { %>
-        <li> <a href="/signup"> Sign Up </a></li>
-        <li> <a href="/login"> Login </a></li>
-    <% } %>
-      </ul>
+      <nav>
+        <ul>
+          <li> <a href="/"> Home </a> </li>
+
+          <% if (typeof user !== 'undefined') { %>
+
+            <li> <a href="/profile/edit"> Edit Profile </a> </li>
+            <li> <a href="/logout"> Log Out </a> </li>
+
+          <% } else { %>
+
+            <li> <a href="/signup"> Sign Up </a> </li>
+            <li> <a href="/login"> Log In </a> </li>
+
+          <% } %>
+        </ul>
+      </nav>
     </header>
 
     <%- body %>
 
     <footer>
-      <p>Made with &hearts; by Wadson Fleurigene</p>
+      <p> Made with &hearts; at Ironhack. </p>
     </footer>
   </body>
 </html>

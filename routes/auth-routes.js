@@ -1,92 +1,125 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const passport = require('passport');
+const ensure = require('connect-ensure-login');
+
 const User = require('../models/user-model.js');
+
 
 const authRoutes = express.Router();
 
 
-authRoutes.get('/signup', (req, res, next) => {
-  res.render('auth/signup-view.ejs');
+authRoutes.get('/signup',
+    //        redirects to '/' (home page) if you ARE logged in
+    //                      |
+  ensure.ensureNotLoggedIn('/'),
 
-});
+  (req, res, next) => {
+    // If not for 'ensureNotLoggedIn()' we would have to do this:
 
-// <form methpd="post" action="/signup"> --> form located in signup-view
-authRoutes.post('/signup', (req, res, next) => {
-// shortening username & password text
-  const signupUsername = req.body.signupUsername;
-  const signupPassword = req.body.signupPassword;
+    // if (req.user) {
+    //   res.redirect('/');
+    //   return;
+    // }
 
-    // if we did not use varibles, it would look like below.
-    // if (req.body.signupUsername === '' || req.body.signupPassword === '')
-
-  if (signupUsername === '' || signupPassword === '') {
-    res.render('auth/signup-view.ejs', {
-      // if username or password is blank, render page again WITH error.
-      errorMessage: 'Please provide both username and password...'
-    });
-    // stop processing any other pages.
-    return;
+    res.render('auth/signup-view.ejs');
   }
+);
 
-    // checking for duplicate usernames.
-  User.findOne(
-    // 1st arg -> criteria of the findOne (which documents)
-    { username: signupUsername },
-    // 2nd arg -> projection (which fields)
-    { username: 1 },
-    // 3rd arg -> callback
-    (err, foundUser) => {
-      if (err) {
-        next(err);
-        return;
-      }
 
-      if (foundUser) {
-        // If we found someone, let's render the sign up page again w/ error.
-        res.render('auth/signup-view.ejs', {
-          errorMessage: 'Username is taken, fool...'
-        });
-        return;
-      }
+// <form method="post" action="/signup">
+authRoutes.post('/signup',
+  //        redirects to '/' (home page) if you ARE logged in
+  //                      |
+  ensure.ensureNotLoggedIn('/'),
 
-      // if user used a valid username and there's no duplicate
-      // let's save them to database and encrypt password
+  (req, res, next) => {
+    const signupUsername = req.body.signupUsername;
+    const signupPassword = req.body.signupPassword;
 
-      // Encrypt the password.
-      const salt = bcrypt.genSaltSync(10);
-      const hashPass = bcrypt.hashSync(signupPassword, salt)
-
-      // Create the user.
-      const theUser = new User({
-        name: req.body.signupName,
-        username: signupUsername,
-        encryptedPassword: hashPass
+    // Don't let users submit blank usernames or passwords
+    if (signupUsername === '' || signupPassword === '') {
+      res.render('auth/signup-view.ejs', {
+        errorMessage: 'Please provide both username and password.'
       });
+      return;
+    }
 
-      // Save the user.
-      theUser.save((err) => {
+    // Check password length, characters, etc. (we are ignoring that here)
+
+    User.findOne(
+      // 1st arg -> criteria of the findOne (which documents)
+      { username: signupUsername },
+      // 2nd arg -> projection (which fields)
+      { username: 1 },
+      // 3rd arg -> callback
+      (err, foundUser) => {
         if (err) {
           next(err);
           return;
         }
 
-        // Redirect the user to home page if save is successful
-        res.redirect('/');
+        // Don't let the user register if the username is taken
+        if (foundUser) {
+          res.render('auth/signup-view.ejs', {
+            errorMessage: 'Username is taken, sir or madam.'
+          });
+          return;
+        }
 
-      });
-    }
-  );
-});
+        // We are good to go, time to save the user.
 
-authRoutes.get('/login', (req, res, next) => {
-  res.render('auth/login-view.ejs');
-});
+        // Encrypt the password
+        const salt = bcrypt.genSaltSync(10);
+        const hashPass = bcrypt.hashSync(signupPassword, salt);
+
+        // Create the user
+        const theUser = new User({
+          name: req.body.signupName,
+          username: signupUsername,
+          encryptedPassword: hashPass
+        });
+
+        // Save it
+        theUser.save((err) => {
+          if (err) {
+            next(err);
+            return;
+          }
+
+          // Redirect to home page if save is successful
+          res.redirect('/');
+        });
+      }
+    );
+  }
+);
+
+authRoutes.get('/login',
+    //        redirects to '/' (home page) if you ARE logged in
+    //                      |
+  ensure.ensureNotLoggedIn('/'),
+
+  (req, res, next) => {
+    // If not for 'ensureNotLoggedIn()' we would have to do this:
+
+    // if (req.user) {
+    //   res.redirect('/');
+    //   return;
+    // }
+
+    res.render('auth/login-view.ejs');
+  }
+);
 
 // <form method="post" action="/login">
 authRoutes.post('/login',
-//                      local as in "LocalStrategy" (our method of login.)
-//                        |
+    //        redirects to '/' (home page) if you ARE logged in
+    //                      |
+  ensure.ensureNotLoggedIn('/'),
+
+    //                   local as in "LocalStrategy" (our method of logging in)
+    //                     |
   passport.authenticate('local', {
     successRedirect: '/',
     failureRedirect: '/login'
@@ -94,9 +127,9 @@ authRoutes.post('/login',
 );
 
 authRoutes.get('/logout', (req, res, next) => {
-  // req.logout() method provided by Passport.
+  // req.logout() method provided by Passport
   req.logout();
-  
+
   res.redirect('/');
 });
 
