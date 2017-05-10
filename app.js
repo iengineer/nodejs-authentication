@@ -8,6 +8,7 @@ const layouts      = require('express-ejs-layouts');
 const mongoose     = require('mongoose');
 const session      = require('express-session');
 const passport     = require('passport');
+const flash        = require('connect-flash');
 
 
 mongoose.connect('mongodb://localhost/authentication-app');
@@ -36,6 +37,8 @@ app.use( session({
   resave: true,
   saveUninitialized: true
 }) );
+app.use(flash());
+
 
 // These need to come AFTER the session middleware
 app.use(passport.initialize());
@@ -47,6 +50,7 @@ app.use(passport.session());
 //   user: req.user     for all renders!
 app.use((req, res, next) => {
   if (req.user) {
+    // Creates a variable "user" for all views.
     res.locals.user = req.user;
   }
 
@@ -95,7 +99,6 @@ const LocalStrategy = require('passport-local').Strategy;
 
 const bcrypt = require('bcrypt');
 
-
 passport.use( new LocalStrategy(
   // 1st arg -> options to customize LocalStrategy
   {
@@ -139,7 +142,7 @@ passport.use( new LocalStrategy(
       }
     );
   }
-) );
+));
 
 
 
@@ -155,7 +158,6 @@ app.use('/', myAuthRoutes);
 const myUserRoutes = require('./routes/user-routes.js');
 app.use('/', myUserRoutes);
 // ----------------------------------------------------------
-
 
 
 // catch 404 and forward to error handler

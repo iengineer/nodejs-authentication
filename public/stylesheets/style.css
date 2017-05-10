@@ -19,3 +19,10 @@ li, ul, ol {
   padding: 15px;
   width: 30%;
 }
+
+.success {
+  background-color: chartreuse;
+  color: black;
+  border-radius: 3px;
+  padding: 15px;
+}

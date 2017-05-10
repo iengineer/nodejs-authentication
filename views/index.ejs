@@ -1,8 +1,12 @@
 <h1><%= title %></h1>
 
-<!-- can be used on any page to customize a login message. -->
+<!-- req.flash() returns an array (wat) -->
+<% if (successMessage.length > 0) { %>
+  <div class="success"> <%= successMessage %> </div>
+<% } %>
+
 <% if (typeof user !== 'undefined') { %>
-  <p> Hello, <%= user.name %>! </p>
+  <p> Hello, <%= user.name %>. </p>
 <% } %>
 
 <p>Welcome to <%= title %></p>
