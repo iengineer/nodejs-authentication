@@ -10,8 +10,17 @@ const session      = require('express-session');
 const passport     = require('passport');
 const flash        = require('connect-flash');
 
+// Load our ENVIRONMENT VARIABLES from the .env file in dev.
+// (this is for dev only, but in prod it does nothing. 'harmless in production.')
+require('dotenv').config();
 
-mongoose.connect('mongodb://localhost/authentication-app');
+
+// Tell node to run the code contained in this file
+// (this sets up passport and our strategies)
+require('./config/passport-config.js');
+
+
+mongoose.connect(process.env.MONGODB_URI);
 
 const app = express();
 
@@ -20,7 +29,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 // default value for title local
-app.locals.title = 'ExpressJS Authentication';
+app.locals.title = 'Authentication Application';
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -31,14 +40,13 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(layouts);
 app.use( session({
-  secret: 'threatZERO authentication',
+  secret: 'my cool passport app',
 
   // these two options are there to prevent warnings in terminal
   resave: true,
   saveUninitialized: true
 }) );
 app.use(flash());
-
 
 // These need to come AFTER the session middleware
 app.use(passport.initialize());
@@ -50,100 +58,12 @@ app.use(passport.session());
 //   user: req.user     for all renders!
 app.use((req, res, next) => {
   if (req.user) {
-    // Creates a variable "user" for all views.
+    // Creates a variable "user" for views
     res.locals.user = req.user;
   }
 
   next();
 });
-
-
-// PASSPORT GOES THROUGH THIS
-  // 1. Our form
-  // 2. LocalStrategy callback
-  // 3. (if successful) passport.serializeUser()
-
-
-// Determines WHAT TO SAVE in the session (what to put in the box)
-// (called when you log in)
-passport.serializeUser((user, cb) => {
-  // "cb" is short for "callback"
-  cb(null, user._id);
-});
-
-
-const User = require('./models/user-model.js');
-
-// Where to get the rest of the user's information (given what's in the box)
-// (called on EVERY request AFTER you log in)
-passport.deserializeUser((userId, cb) => {
-  // "cb" is short for "callback"
-
-  // query the database with the ID from the box
-  User.findById(userId, (err, theUser) => {
-    if (err) {
-      cb(err);
-      return;
-    }
-
-    // sending the user's info to passport
-    cb(null, theUser);
-  });
-});
-
-
-const LocalStrategy = require('passport-local').Strategy;
-// The same as:
-// const passportLocal = require('passport-local');
-// const LocalStrategy = passportLocal.Strategy;
-
-const bcrypt = require('bcrypt');
-
-passport.use( new LocalStrategy(
-  // 1st arg -> options to customize LocalStrategy
-  {
-      // <input name="loginUsername">
-    usernameField: 'loginUsername',
-      // <input name="loginPassword">
-    passwordField: 'loginPassword'
-  },
-
-  // 2nd arg -> callback for the logic that validates the login
-  (loginUsername, loginPassword, next) => {
-    User.findOne(
-      { username: loginUsername },
-
-      (err, theUser) => {
-        // Tell Passport if there was an error (nothing we can do)
-        if (err) {
-          next(err);
-          return;
-        }
-
-        // Tell Passport if there is no user with given username
-        if (!theUser) {
-            //       false in 2nd arg means "Log in failed!"
-            //         |
-          next(null, false);
-          return;
-        }
-
-        // Tell Passport if the passwords don't match
-        if (!bcrypt.compareSync(loginPassword, theUser.encryptedPassword)) {
-            //       false in 2nd arg means "Log in failed!"
-            //         |
-          next(null, false);
-          return;
-        }
-
-        // Give Passport the user's details (SUCCESS!)
-        next(null, theUser);
-          // -> this user goes to passport.serializeUser()
-      }
-    );
-  }
-));
-
 
 
 
@@ -157,7 +77,11 @@ app.use('/', myAuthRoutes);
 
 const myUserRoutes = require('./routes/user-routes.js');
 app.use('/', myUserRoutes);
+
+const myRoomRoutes = require('./routes/room-routes.js');
+app.use('/', myRoomRoutes);
 // ----------------------------------------------------------
+
 
 
 // catch 404 and forward to error handler

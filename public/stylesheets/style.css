@@ -1,23 +1,18 @@
 body {
   padding: 50px;
-  font: 14px Helvetica, Arial, sans-serif;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
 a {
   color: #00B7FF;
-}
-
-li, ul, ol {
-  list-style: none;
+  text-decoration: none;
 }
 
 .error {
   background-color: red;
-  box-shadow: 10px 10px 5px #eee;
-  color: #fff;
+  color: white;
   border-radius: 3px;
   padding: 15px;
-  width: 30%;
 }
 
 .success {
@@ -25,4 +20,10 @@ li, ul, ol {
   color: black;
   border-radius: 3px;
   padding: 15px;
+}
+
+li, ul, ol {
+  list-style: none;
+  display: inline;
+  padding-left: 10px;
 }
